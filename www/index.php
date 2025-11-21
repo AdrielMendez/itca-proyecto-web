@@ -175,7 +175,6 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <th>Dirección</th>
             <th>Departamento</th>
             <th>Archivo</th>
-            <th>Fecha</th>
         </tr>
 
         <?php foreach ($clientes as $cli): ?>
@@ -192,7 +191,6 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     —
                 <?php endif; ?>
             </td>
-            <td><?= $cli['fecha'] ?></td>
         </tr>
         <?php endforeach; ?>
 
