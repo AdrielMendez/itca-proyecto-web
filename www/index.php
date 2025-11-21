@@ -1,96 +1,82 @@
 <?php
 
-// Ajusta tus datos de Railway
+// Datos Railway
 $host = "hopper.proxy.rlwy.net";
 $port = 41725;
-$dbname = "railway";
 $user = "root";
-$pass = "NInCtNAqoHyRyDMWLJbEtfynXZpTPRDu";
+$password = "NInCtNAqoHyRyDMWLJbEtfynXZpTPRDu";
+$dbname = "railway";
 
-// Conexión PDO
 try {
-    $pdo = new PDO("mysql:host=$host;port=$port;dbname=$dbname", $user, $pass);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
+    $pdo = new PDO($dsn, $user, $password);
 } catch (PDOException $e) {
     die("Error de conexión: " . $e->getMessage());
 }
 
-// Guardar datos del formulario
-$mensaje = "";
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $name = $_POST["name"];
-    $celular = $_POST["celular"];
-    $direccion = $_POST["direccion"];
-    $departamento = $_POST["departamento"];
+$message = "";
 
-    $sql = "INSERT INTO clientes (name, celular, direccion, departamento)
-            VALUES (?, ?, ?, ?)";
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+
+    $name = $_POST["name"] ?? "";
+    $celular = $_POST["celular"] ?? "";
+    $direccion = $_POST["direccion"] ?? "";
+    $departamento = $_POST["departamento"] ?? "";
+    $archivo_final = null;
+
+    // Ruta de uploads dentro del contenedor
+    $uploads_dir = __DIR__ . "/uploads/";
+
+    // Subir archivo
+    if (isset($_FILES["archivo"]) && $_FILES["archivo"]["error"] === 0) {
+
+        $filename = time() . "_" . basename($_FILES["archivo"]["name"]);
+        $target = $uploads_dir . $filename;
+
+        if (move_uploaded_file($_FILES["archivo"]["tmp_name"], $target)) {
+            $archivo_final = $filename;
+        } else {
+            $message = "Error al subir archivo.";
+        }
+    }
+
+    // Guardar en BD
+    $sql = "INSERT INTO clientes (name, celular, direccion, departamento, archivo) 
+            VALUES (:name, :celular, :direccion, :departamento, :archivo)";
 
     $stmt = $pdo->prepare($sql);
 
-    if ($stmt->execute([$name, $celular, $direccion, $departamento])) {
-        $mensaje = "Cliente guardado correctamente.";
-    } else {
-        $mensaje = "Error al guardar.";
-    }
-}
+    $stmt->execute([
+        ":name" => $name,
+        ":celular" => $celular,
+        ":direccion" => $direccion,
+        ":departamento" => $departamento,
+        ":archivo" => $archivo_final
+    ]);
 
-// Obtener lista de clientes
-$clientes = $pdo->query("SELECT * FROM clientes ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+    $message = "Cliente guardado correctamente";
+}
 
 ?>
 
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Clientes - LAMP + Railway</title>
-    <meta charset="UTF-8">
-    <style>
-        body { font-family: Arial; padding: 30px; }
-        form { margin-bottom: 30px; }
-        input { display:block; margin:10px 0; padding:8px; width:250px; }
-        table { border-collapse: collapse; width: 80%; margin-top: 20px; }
-        th, td { border:1px solid #ccc; padding:10px; }
-    </style>
-</head>
 <body>
+<h2>Registrar cliente</h2>
 
-<h1>Registro de Clientes</h1>
+<?php if ($message) echo "<p><b>$message</b></p>"; ?>
 
-<?php if ($mensaje): ?>
-<p><strong><?= $mensaje ?></strong></p>
-<?php endif; ?>
-
-<form method="POST">
-    <input type="text" name="name" placeholder="Nombre" required>
-    <input type="text" name="celular" placeholder="Celular" required>
-    <input type="text" name="direccion" placeholder="Dirección" required>
-    <input type="text" name="departamento" placeholder="Departamento" required>
-
-    <button type="submit">Guardar Cliente</button>
+<form method="POST" enctype="multipart/form-data">
+    Nombre: <input name="name"><br><br>
+    Celular: <input name="celular"><br><br>
+    Dirección: <input name="direccion"><br><br>
+    Departamento: <input name="departamento"><br><br>
+    
+    Archivo (opcional):
+    <input type="file" name="archivo"><br><br>
+    
+    <button type="submit">Guardar</button>
 </form>
-
-<h2>Clientes registrados</h2>
-
-<table>
-    <tr>
-        <th>ID</th>
-        <th>Nombre</th>
-        <th>Celular</th>
-        <th>Dirección</th>
-        <th>Departamento</th>
-    </tr>
-
-    <?php foreach ($clientes as $c): ?>
-    <tr>
-        <td><?= $c['id'] ?></td>
-        <td><?= $c['name'] ?></td>
-        <td><?= $c['celular'] ?></td>
-        <td><?= $c['direccion'] ?></td>
-        <td><?= $c['departamento'] ?></td>
-    </tr>
-    <?php endforeach; ?>
-</table>
 
 </body>
 </html>
