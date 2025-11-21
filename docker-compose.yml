@@ -1,9 +1,11 @@
 services:
+
   apache:
     image: php:8.2-apache
     container_name: apache
     volumes:
       - ./www:/var/www/html/
+      - ./uploads:/var/www/html/uploads
     ports:
       - "8080:80"
     depends_on:
@@ -19,3 +21,6 @@ services:
       MYSQL_DATABASE: testdb
     ports:
       - "3306:3306"
+
+volumes:
+  dbdata:
