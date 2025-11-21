@@ -1,6 +1,6 @@
 <?php
-// CONFIGURACIÓN DE BASE DE DATOS (Railway)
-$host = "hopper.proxy.rlwy.net";   // Cambia si tu host es otro
+// CONFIG DE BASE DE DATOS 
+$host = "hopper.proxy.rlwy.net";
 $db   = "railway";
 $user = "root";
 $pass = "NInCtNAqoHyRyDMWLJbEtfynXZpTPRDu";
@@ -13,33 +13,43 @@ try {
     die("Error de conexión: " . $e->getMessage());
 }
 
-// PROCESAR FORMULARIO
 $mensaje = "";
 
+// PROCESAR FORMULARIO
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    $nombre = $_POST['nombre'] ?? "";
-    $email = $_POST['email'] ?? "";
-    $archivoNombre = "";
+    $name         = $_POST['name'] ?? "";
+    $celular      = $_POST['celular'] ?? "";
+    $direccion    = $_POST['direccion'] ?? "";
+    $departamento = $_POST['departamento'] ?? "";
+    $archivo_final = "";
 
     // SUBIR ARCHIVO
     if (!empty($_FILES['archivo']['name'])) {
-        $destino = "uploads/" . basename($_FILES["archivo"]["name"]);
+
+        $nombreArchivo  = basename($_FILES["archivo"]["name"]);
+        $destino        = "uploads/" . $nombreArchivo;
+
         if (move_uploaded_file($_FILES["archivo"]["tmp_name"], $destino)) {
-            $archivoNombre = basename($_FILES["archivo"]["name"]);
+            $archivo_final = $nombreArchivo;
         }
     }
 
-    // INSERTAR EN BD
-    $sql = "INSERT INTO clientes (nombre, email, archivo) VALUES (:nombre, :email, :archivo)";
+    // INSERTAR EN BD CON TUS CAMPOS
+    $sql = "INSERT INTO clientes (name, celular, direccion, departamento, archivo)
+            VALUES (:name, :celular, :direccion, :departamento, :archivo)";
+
     $stmt = $pdo->prepare($sql);
+
     $stmt->execute([
-        'nombre' => $nombre,
-        'email'  => $email,
-        'archivo' => $archivoNombre
+        ":name"         => $name,
+        ":celular"      => $celular,
+        ":direccion"    => $direccion,
+        ":departamento" => $departamento,
+        ":archivo"      => $archivo_final
     ]);
 
-    $mensaje = "Registro guardado correctamente!";
+    $mensaje = "Cliente guardado correctamente!";
 }
 
 // CONSULTAR REGISTROS
@@ -60,7 +70,7 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             padding: 20px;
         }
         .container {
-            max-width: 850px;
+            max-width: 900px;
             margin: auto;
             background: white;
             padding: 25px;
@@ -74,7 +84,7 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         form {
             margin-bottom: 30px;
         }
-        input, button {
+        input, select, button {
             padding: 10px;
             width: 100%;
             margin: 8px 0;
@@ -135,9 +145,23 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <?php endif; ?>
 
     <form method="POST" enctype="multipart/form-data">
-        <input type="text" name="nombre" placeholder="Nombre" required>
-        <input type="email" name="email" placeholder="Correo" required>
+
+        <input type="text" name="name" placeholder="Nombre" required>
+        <input type="text" name="celular" placeholder="Celular" required>
+        <input type="text" name="direccion" placeholder="Dirección" required>
+
+        <select name="departamento" required>
+            <option value="">Seleccione departamento</option>
+            <option>San Salvador</option>
+            <option>La Libertad</option>
+            <option>Santa Ana</option>
+            <option>Usulután</option>
+            <option>San Miguel</option>
+        </select>
+
+        <label>Adjuntar archivo:</label>
         <input type="file" name="archivo">
+
         <button type="submit">Guardar Cliente</button>
     </form>
 
@@ -147,7 +171,9 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <tr>
             <th>ID</th>
             <th>Nombre</th>
-            <th>Email</th>
+            <th>Celular</th>
+            <th>Dirección</th>
+            <th>Departamento</th>
             <th>Archivo</th>
             <th>Fecha</th>
         </tr>
@@ -155,13 +181,13 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <?php foreach ($clientes as $cli): ?>
         <tr>
             <td><?= $cli['id'] ?></td>
-            <td><?= $cli['nombre'] ?></td>
-            <td><?= $cli['email'] ?></td>
+            <td><?= $cli['name'] ?></td>
+            <td><?= $cli['celular'] ?></td>
+            <td><?= $cli['direccion'] ?></td>
+            <td><?= $cli['departamento'] ?></td>
             <td>
                 <?php if ($cli['archivo']): ?>
-                    <a class="archivo-link" href="uploads/<?= $cli['archivo'] ?>" target="_blank">
-                        Descargar
-                    </a>
+                    <a class="archivo-link" href="uploads/<?= $cli['archivo'] ?>" target="_blank">Descargar</a>
                 <?php else: ?>
                     —
                 <?php endif; ?>
