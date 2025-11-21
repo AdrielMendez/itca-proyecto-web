@@ -157,6 +157,9 @@ $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <option>Santa Ana</option>
             <option>Usulután</option>
             <option>San Miguel</option>
+                <option>Ahuachapan</option>
+                <option>La paz</option>
+                <option>Cabañas</option>
         </select>
 
         <label>Adjuntar archivo:</label>
